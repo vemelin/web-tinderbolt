@@ -18,7 +18,7 @@ class ChatGptService {
 
     async sendMessageList() {
         const completion = await this.client.createChatCompletion({
-            model: 'gpt-3.5-turbo',  // gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+            model: 'gpt-4o',  // gpt-4o, gpt-4-turbo, gpt-3.5-turbo, gpt-3.5-turbo
             messages: this.messageList,
             max_tokens: 3000,
             temperature: 0.9

@@ -49,7 +49,7 @@ class HtmlTelegramBot extends TelegramBot {
 
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
-        await page.goto(__dirname + "/../resources/html/main.html")
+        await page.goto(`file://${__dirname}/../resources/html/main.html`)
         await page.setContent(html);
         await page.addStyleTag({path: __dirname + cssPath});
 
