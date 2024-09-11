@@ -6,6 +6,7 @@ class MyTelegramBot extends HtmlTelegramBot {
         super(token);
         this.mode = null;
         this.list = [];
+        this.user = {};
     }
 
     async start(msg) {
@@ -33,9 +34,6 @@ class MyTelegramBot extends HtmlTelegramBot {
     }
 
     async gpt(msg){
-        if (this.list.length > 0) {
-            this.list.length = 0;
-        }
         this.mode = 'gpt';
         const text = this.loadMessage('gpt')
         await this.sendImage('gpt')
@@ -86,13 +84,14 @@ class MyTelegramBot extends HtmlTelegramBot {
             'message_next' : 'Next message',
             'message_date' : 'Invite on date',
         })
+        this.list = [];
     }
     async messageHandler(callback){
         const query = callback.data;
         const prompt = this.loadPrompt(query);
         const userChatHistory = this.list.join('\n\n');
 
-        const myMessage = await this.sendText('ChatGPT is looking for a next answer....')
+        const myMessage = await this.sendText('ChatGPT is looking for a next answer...')
         const response = await chatGPT.sendQuestion(prompt, userChatHistory);
         await  this.editText(myMessage, response)
     }
@@ -101,15 +100,107 @@ class MyTelegramBot extends HtmlTelegramBot {
         this.list.push(userQuestion);
     }
 
+    async profile(msg){
+        this.mode = 'profile';
+        const text = this.loadMessage('profile');
+        await this.sendImage('profile');
+        await this.sendText(text);
+
+        this.user = {};
+        this.count = 0;
+        await this.sendText('How old are you?');
+    }
+
+    async profilePrompts(msg){
+        const userQuestion = msg.text;
+        this.count++;
+
+        if (this.count === 1) {
+            this.user['age'] = userQuestion;
+            await this.sendText('Where are you working right now?');
+        }
+
+        if (this.count === 2) {
+            this.user['duty'] = userQuestion;
+            await this.sendText('Do you have a personal hobby?');
+        }
+        if (this.count === 3) {
+            this.user['hobby'] = userQuestion;
+            await this.sendText('What did you dislike in people?');
+        }
+        if (this.count === 4) {
+            this.user['dislike'] = userQuestion;
+            await this.sendText('What is your goal of the upcoming dates?');
+        }
+        if (this.count === 5) {
+            this.user['goals'] = userQuestion;
+
+            // Render request to gpt
+            const prompt = this.loadPrompt('profile');
+            const info = userInfoToString(this.user);
+
+            const myMessage = await this.sendText('ChatGPT is looking for a next answer...')
+            const answer = await  chatGPT.sendQuestion(prompt, info);
+            await this.sendText(answer, myMessage);
+        }
+    }
+
+    async opener(msg) {
+        this.mode = 'opener';
+        const text = this.loadMessage('opener');
+        await this.sendImage('opener');
+        await this.sendText(text);
+
+        this.user = {};
+        this.count = 0;
+        await this.sendText('What is her name?');
+    }
+
+    async openerPrompts(msg){
+        const userQuestion = msg.text;
+        this.count++;
+
+        if (this.count === 1) {
+            this.user['name'] = userQuestion;
+            await this.sendText('How old is she?');
+        }
+        if (this.count === 2) {
+            this.user['age'] = userQuestion;
+            await this.sendText('How beautiful is she?');
+        }
+        if (this.count === 3) {
+            this.user['handsome'] = userQuestion;
+            await this.sendText('What she id doing for her living?');
+        }
+        if (this.count === 4) {
+            this.user['occupation'] = userQuestion;
+            await this.sendText('What is purpose of date?');
+        }
+        if (this.count === 5) {
+            this.user['goals'] = userQuestion;
+
+            // Render request to gpt
+            const prompt = this.loadPrompt('opener');
+            const info = userInfoToString(this.user);
+
+            const myMessage = await this.sendText('ChatGPT is looking for a next answer...')
+            const answer = await  chatGPT.sendQuestion(prompt, info);
+            await this.sendText(answer, myMessage);
+        }
+    }
+
     // Мы будем писать тут наш код
     async hello (msg) {
-        // this.list.length = 0;
         if (this.mode === 'gpt') {
             await this.gptPrompt(msg)
         } else if (this.mode === 'date') {
             await  this.datePrompts(msg)
         } else if (this.mode === 'message') {
             await this.messagePrompts(msg)
+        } else if (this.mode === 'profile') {
+            await this.profilePrompts(msg)
+        } else if (this.mode === 'opener') {
+            await this.openerPrompts(msg)
         } else {
             await this.sendText('Hey how are you?');
             await this.sendText(`Did you mean ${msg.text}`)
@@ -140,6 +231,8 @@ bot.onCommand(/\/html/, bot.html) // /html
 bot.onCommand(/\/gpt/, bot.gpt) // /gpt
 bot.onCommand(/\/date/, bot.date) // /date
 bot.onCommand(/\/message/, bot.message) // /message
+bot.onCommand(/\/profile/, bot.profile) // /profile
+bot.onCommand(/\/opener/, bot.opener) // /opener
 
 bot.onTextMessage(bot.hello)
 bot.onButtonCallback(/^date_.*/, bot.dateHandler)
